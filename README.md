@@ -26,15 +26,25 @@
 
 👥 Біздің команда
 
-👥 Қатысушы	🎯 Рөлі	🛠 Үлесі
-Қадыр	Project Manager	Жобаны басқару, жоспарлау
-Жанара	UI/UX Designer	Дизайн, интерфейс, UX
-Ақжарқын	Frontend Developer	Интерфейс жасау (React)
-Аида	Algorithm Developer	LRU алгоритмін жасау
-Таңбол	AI & Logic	AI интеграция, логика
-Бағжан	DevOps	GitHub, deploy
-Қанатбек	Tester	Тестілеу, қателерді табу
-🕹️ Қалай іске қосу -Репозиторийді жүктеу: -git clone https://github.com/your-project.git -Папкаға кіру: -cd your-project -Іске қосу: -index.html ашу
+| Участник | Роль                | Вклад                                         |
+| -------- | ------------------- | --------------------------------------------- |
+| Қадыр    | Project Manager     | Жобаны басқару, жоспарлау                     |
+| Жанара   | UI/UX Designer      | Дизайн, интерфейс, UX                         |
+| Ақжарқын | Frontend Developer  | Интерфейс жасау (React), анимация және логика |
+| Аида     | Algorithm Developer | LRU алгоритмін жасау                          |
+| Таңбол   | AI & Game Logic     | AI интеграция, квесттер және логика           |
+| Бағжан   | DevOps / GitHub     | GitHub, CI/CD, deploy                         |
+| Қанатбек | Tester              | Тестілеу, қателерді табу                      |
+
+🕹️ Қалай іске қосу -Репозиторийді жүктеу:
+
+-git clone https://github.com/your-project.git 
+
+-Папкаға кіру: -cd your-project
+
+-Іске қосу:
+
+-index.html ашу
 
 💾 Деректер архитектурасы
 
