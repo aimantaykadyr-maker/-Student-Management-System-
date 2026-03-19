@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Interactive Student Portal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #333; min-height: 100vh; overflow-x: hidden; }
+header { background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%); color: white; padding: 20px; text-align: center; font-size: 24px; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1001; }
+header .menu-btn { position: absolute; left: 20px; top: 20px; font-size: 24px; cursor: pointer; transition: transform 0.3s; color: #ecf0f1; }
+header .menu-btn:hover { transform: scale(1.2); }
+
+/* Стили для меню */
+nav {
+    background: #2c3e50;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: -320px;
+    height: 100%;
+    width: 320px;
+    padding: 60px 20px 20px;
+    transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+    z-index: 2000; /* Высокий z-index чтобы быть поверх всего */
+}
+
+nav.show {
+    left: 0;
+}
+
+nav button, nav a {
+    margin: 8px 0;
+    padding: 15px 20px;
+    background: linear-gradient(45deg, #3498db 0%, #2980b9 100%);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    font-size: 16px;
+    transition: all 0.3s;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+nav button:hover, nav a:hover {
+    background: linear-gradient(45deg, #2980b9 0%, #3498db 100%);
+    transform: translateX(10px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+nav button i, nav a i { margin-right: 10px; }
+
+/* Затемняющий оверлей */
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1500; /* Между меню (2000) и контентом (ниже) */
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+/* Контейнер с контентом */
+.container {
+    max-width: 1400px;
+    margin: 80px auto;
+    padding: 20px;
+    animation: slideIn 0.8s ease-out;
+    position: relative;
+    z-index: 1;
+    transition: filter 0.3s, margin-left 0.4s;
+}
+
+/* Эффекты при открытом меню */
+.container.blur {
+    filter: blur(2px);
+    pointer-events: none; /* Запрещаем клики по контенту */
+}
+
+/* Альтернативный вариант со сдвигом (раскомментируйте если нужен сдвиг вместо размытия) */
+/*
+.container.shifted {
+    margin-left: 320px;
+}
+*/
+
+@keyframes slideIn { 
+    from { opacity: 0; transform: translateY(30px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+.hidden { display: none; }
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.card {
+    background: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, #3498db, #e74c3c);
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+}
+
+.card h3 { margin-bottom: 15px; color: #2c3e50; font-weight: 600; }
+
+.big-btn {
+    padding: 15px;
+    font-size: 16px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    cursor: pointer;
+    margin-top: 15px;
+    width: 100%;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.big-btn:hover {
+    background: linear-gradient(45deg, #2ecc71 0%, #27ae60 100%);
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+input, textarea {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus, textarea:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+textarea { height: 140px; resize: vertical; }
+
+.task {
+    background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.task:hover {
+    background: linear-gradient(135deg, #bdc3c7 0%, #ecf0f1 100%);
+}
+
+.links a {
+    display: block;
+    margin-top: 10px;
+    font-size: 16px;
+    color: #3498db;
+    text-decoration: none;
+    transition: color 0.3s;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.links a:hover {
+    color: #e74c3c;
+    background: #ecf0f1;
+}
+
+footer {
+    margin-top: 50px;
+    background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    text-align: center;
+    padding: 25px;
+    font-size: 16px;
+    animation: fadeInUp 1s ease-out;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes fadeInUp { 
+    from { opacity: 0; transform: translateY(20px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+.correct { color: #27ae60; font-weight: bold; }
+.wrong { color: #e74c3c; font-weight: bold; }
+
+.visit-counter {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 14px;
+    background: rgba(255,255,255,0.2);
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.visits-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.visits-table th, .visits-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.visits-table th {
+    background: #f4f4f4;
+    font-weight: 600;
+}
+
+/* Блокировка прокрутки при открытом меню */
+body.no-scroll {
+    overflow: hidden;
+}
+</style>
+</head>
+<body>
+
+<header>
+<span class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></span>
+<i class="fas fa-graduation-cap"></i> STUDENT PORTAL
+<div class="visit-counter"><i class="fas fa-eye"></i> Посещений: <span id="visitCount">0</span> <span id="currentUserDisplay"></span></div>
+</header>
+
+<nav id="sideMenu">
+<button onclick="show('home');toggleMenu()"><i class="fas fa-home"></i> Басты бет</button>
+<button onclick="show('subjects');toggleMenu()"><i class="fas fa-book"></i> Тапсырмалар</button>
+<button onclick="show('notes');toggleMenu()"><i class="fas fa-sticky-note"></i> Notes</button>
+<button onclick="show('links');toggleMenu()"><i class="fas fa-link"></i> Useful Links</button>
+<button onclick="show('visits');toggleMenu()"><i class="fas fa-chart-line"></i> Посещения</button>
+<button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Шығу</button>
+</nav>
+
+<!-- Затемняющий оверлей -->
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<div class="container" id="container">
+
+<!-- LOGIN -->
+<div id="loginPage">
+<h2><i class="fas fa-sign-in-alt"></i> Кіру</h2>
+<input id="loginUser" placeholder="Username">
+<input id="loginPass" type="password" placeholder="Password">
+<button class="big-btn" onclick="login()"><i class="fas fa-key"></i> Кіру</button>
+<p style="margin-top:15px;">Аккаунт жоқ па?</p>
+<button class="big-btn" onclick="showRegister()"><i class="fas fa-user-plus"></i> Тіркелу</button>
+</div>
+
+<!-- REGISTER -->
+<div id="registerPage" class="hidden">
+<h2><i class="fas fa-user-plus"></i> Тіркелу</h2>
+<input id="regUser" placeholder="Username">
+<input id="regPass" type="password" placeholder="Password">
+<button class="big-btn" onclick="register()"><i class="fas fa-check"></i> Аккаунт жасау</button>
+<button class="big-btn" onclick="showLogin()"><i class="fas fa-arrow-left"></i> Кіруге қайту</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+<div id="home">
+<h2><i class="fas fa-smile"></i> Қош келдің!</h2>
+<div class="card">
+<p>Бұл интерактив студент порталы. Мұнда пәндерді көре аласың, есептерді орындап, өз жазбаларыңды сақтай аласың.</p>
+<h3>"Күн сайын 1% жақсарсаң — 1 жылда 37 есе жақсы боласың."</h3>
+<p style="margin-top:20px;"><strong>📬 Свяжитесь с нами</strong></p>
+<p>Если у вас возникли вопросы, предложения или вам нужна помощь, мы всегда на связи!</p>
+<p><strong>📧 Электронная почта</strong><br>
+sol tangazinovaaida@gmail.com<br>
+На этот адрес вы можете отправлять любые вопросы, и мы обязательно ответим в ближайшее время.</p>
+<p><strong>📞 Телефон</strong><br>
++7 (708) 151-13-91<br>
+Звоните в рабочее время — с 9:00 до 18:00.</p>
+<p><strong>👤 Главный директор</strong><br>
+Аймантай Қадыр<br>
+По всем важным вопросам вы можете обращаться напрямую к руководителю проекта.</p>
+<p><strong>📌 Обратите внимание:</strong><br>
+Все вопросы, связанные с работой портала, учебными материалами и технической поддержкой, принимаются на электронную почту. Мы стараемся отвечать как можно быстрее!</p>
+</div>
+</div>
+
+<div id="subjects" class="hidden">
+<h2><i class="fas fa-book-open"></i> Пәндер</h2>
+<div class="card-grid">
+<div class="card">
+<h3><i class="fab fa-python"></i> Python</h3>
+<p>Тапсырмалар:</p>
+<ul>
+<li><a href="#" onclick="showTask('Python 1: Екі сан қосындысы'); return false;"><i class="fas fa-plus"></i> Python 1: Код для суммы двух чисел (2 варианта)</a></li>
+<li><a href="#" onclick="showTask('Python 2: Жұп немесе тақ'); return false;"><i class="fas fa-calculator"></i> Python 2: Код для проверки чётности x (x=4)</a></li>
+<li><a href="#" onclick="showTask('Python 3: 1-ден N-ге қосынды'); return false;"><i class="fas fa-list-ol"></i> Python 3: Код для суммы от 1 до N (N=10)</a></li>
+<li><a href="#" onclick="showTask('Python 4: 4 пен 5 көбейту'); return false;"><i class="fas fa-times"></i> Python 4: Код для 4*5</a></li>
+<li><a href="#" onclick="showTask('Python 5: Тізімнің ұзындығы [1,2,3,4,5]'); return false;"><i class="fas fa-list"></i> Python 5: Код для длины списка [1,2,3,4,5]</a></li>
+<li><a href="#" onclick="showTask('Python 6: Максимум [1,2,3]'); return false;"><i class="fas fa-arrow-up"></i> Python 6: Код для максимума [1,2,3]</a></li>
+</ul>
+</div>
+<div class="card">
+<h3><i class="fas fa-code"></i> C++</h3>
+<ul>
+<li><a href="#" onclick="showTask('C++ 1: Hello World'); return false;"><i class="fas fa-hello"></i> C++ 1: Hello World</a></li>
+<li><a href="#" onclick="showTask('C++ 2: if else'); return false;"><i class="fas fa-question"></i> C++ 2: if else</a></li>
+<li><a href="#" onclick="showTask('C++ 3: for цикл'); return false;"><i class="fas fa-repeat"></i> C++ 3: for цикл</a></li>
+<li><a href="#" onclick="showTask('C++ 4: Сумма a и b'); return false;"><i class="fas fa-plus"></i> C++ 4: Сумма a и b</a></li>
+<li><a href="#" onclick="showTask('C++ 5: while цикл'); return false;"><i class="fas fa-repeat"></i> C++ 5: while цикл</a></li>
+<li><a href="#" onclick="showTask('C++ 6: Функция'); return false;"><i class="fas fa-function"></i> C++ 6: Функция</a></li>
+</ul>
+</div>
+</div>
+
+<div id="taskDetail" class="card hidden">
+<h3 id="taskTitle"></h3>
+<p id="timer"></p>
+<textarea id="taskAnswer" placeholder="Мұнда кодты жаз..."></textarea>
+<button class="big-btn" onclick="checkTask()"><i class="fas fa-check-circle"></i> Тексеру</button>
+<p id="result"></p>
+</div>
+</div>
+
+<div id="tasks" class="hidden">
+<h2><i class="fas fa-clipboard-list"></i> Тапсырма</h2>
+</div>
+
+<div id="notes" class="hidden">
+<h2><i class="fas fa-edit"></i> Notes</h2>
+<textarea id="noteText"></textarea>
+<button class="big-btn" onclick="saveNote()"><i class="fas fa-save"></i> Сақтау</button>
+</div>
+
+<div id="links" class="hidden">
+<h2><i class="fas fa-external-link-square-alt"></i> Useful Links</h2>
+<div class="links">
+<a href="https://github.com" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+<a href="https://stackoverflow.com" target="_blank"><i class="fab fa-stack-overflow"></i> StackOverflow</a>
+<a href="https://leetcode.com" target="_blank"><i class="fas fa-code"></i> LeetCode</a>
+<a href="https://w3schools.com" target="_blank"><i class="fas fa-school"></i> W3Schools</a>
+<a href="https://geeksforgeeks.org" target="_blank"><i class="fas fa-brain"></i> GeeksForGeeks</a>
+</div>
+</div>
+
+<div id="visits" class="hidden">
+<h2><i class="fas fa-chart-bar"></i> Посещения</h2>
+<div class="card">
+<table class="visits-table">
+<thead>
+<tr>
+<th><i class="fas fa-clock"></i> Время</th>
+<th><i class="fas fa-globe"></i> IP (симулировано)</th>
+<th><i class="fas fa-user"></i> Имя</th>
+<th><i class="fas fa-info-circle"></i> Детали</th>
+</tr>
+</thead>
+<tbody id="visitsTableBody">
+<!-- Данные добавляются JS -->
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+<footer><i class="fas fa-copyright"></i> Student Portal Project - Современный дизайн для студентов</footer>
+</div>
+
+<script>
+let startTime;
+let currentTask = '';
+let currentAnswer = '';
+
+function toggleMenu() {
+    const menu = document.getElementById('sideMenu');
+    const overlay = document.getElementById('overlay');
+    const container = document.getElementById('container');
+    const body = document.body;
+    
+    menu.classList.toggle('show');
+    overlay.classList.toggle('show');
+    container.classList.toggle('blur'); // Размываем контент
+    
+    // Блокируем/разблокируем прокрутку
+    if (menu.classList.contains('show')) {
+        body.classList.add('no-scroll');
+    } else {
+        body.classList.remove('no-scroll');
+    }
+}
+
+function showRegister() { 
+    document.getElementById('loginPage').classList.add('hidden'); 
+    document.getElementById('registerPage').classList.remove('hidden'); 
+}
+
+function showLogin() { 
+    document.getElementById('registerPage').classList.add('hidden'); 
+    document.getElementById('loginPage').classList.remove('hidden'); 
+}
+
+function register() { 
+    let user = document.getElementById("regUser").value; 
+    let pass = document.getElementById("regPass").value; 
+    if (!user || !pass) {
+        alert("Логин мен парольді толтырыңыз");
+        return;
+    }
+    let users = JSON.parse(localStorage.getItem("users") || "[]"); 
+    if (users.find(u => u.user == user)) {
+        alert("Мұндай логин бар");
+        return;
+    }
+    users.push({ user, pass }); 
+    localStorage.setItem("users", JSON.stringify(users)); 
+    alert("Аккаунт жасалды"); 
+    showLogin(); 
+}
+
+function login() { 
+    let user = document.getElementById("loginUser").value; 
+    let pass = document.getElementById("loginPass").value; 
+    let users = JSON.parse(localStorage.getItem("users") || "[]"); 
+    let ok = users.find(u => u.user == user && u.pass == pass); 
+    if (ok) { 
+        localStorage.setItem("currentUser", user);
+        document.getElementById('currentUserDisplay').innerText = ` | ${user}`;
+        document.getElementById("loginPage").classList.add("hidden"); 
+        document.getElementById("dashboard").classList.remove("hidden"); 
+    } else { 
+        alert("Қате логин немесе пароль"); 
+    } 
+}
+
+function logout() { 
+    localStorage.removeItem("currentUser");
+    location.reload(); 
+}
+
+function show(id) { 
+    ["home", "subjects", "notes", "links", "visits"].forEach(s => { 
+        let el = document.getElementById(s);
+        if (el) el.classList.add("hidden"); 
+    }); 
+    let el = document.getElementById(id);
+    if (el) el.classList.remove("hidden"); 
+}
+
+// Task functions
+function showTask(title) {
+    currentTask = title;
+    
+    // Определяем правильные ответы и ожидаемый результат на основе названия задания
+    switch(title) {
+        case 'Python 1: Екі сан қосындысы':
+            currentAnswer = [
+                ['a = int(input("Бірінші санды енгіз: "))', 'b = int(input("Екінші санды енгіз: "))', 'sum = a + b', 'print("Қосындысы:", sum)'],
+                ['x, y = map(int, input("Екі сан енгіз: ").split())', 'result = x + y', 'print(result)']
+            ];
+            expectedResult = null; // проверка текста
+            isPython = true;
+            break;
+        case 'Python 2: Жұп немесе тақ':
+            currentAnswer = ['x % 2 == 0', 'x%2==0', 'not x % 2', 'x % 2 != 1'];
+            expectedResult = true;
+            isPython = true;
+            break;
+        case 'Python 3: 1-ден N-ге қосынды':
+            currentAnswer = ['sum(range(1, N+1))', 'sum(range(N+1))', '(N*(N+1))/2', 'N*(N+1)//2'];
+            expectedResult = 55;
+            isPython = true;
+            break;
+        case 'Python 4: 4 пен 5 көбейту':
+            currentAnswer = ['4*5', '5*4', '20', '4 * 5', '5 * 4'];
+            expectedResult = 20;
+            isPython = true;
+            break;
+        case 'Python 5: Тізімнің ұзындығы [1,2,3,4,5]':
+            currentAnswer = ['len([1,2,3,4,5])', '5'];
+            expectedResult = 5;
+            isPython = true;
+            break;
+        case 'Python 6: Максимум [1,2,3]':
+            currentAnswer = ['max([1,2,3])', '3'];
+            expectedResult = 3;
+            isPython = true;
+            break;
+        default:
+            currentAnswer = [];
+            expectedResult = null;
+            isPython = false;
+    }
+    
+    // Показываем раздел задач и детали
+    document.getElementById('subjects').classList.remove('hidden');
+    document.getElementById('taskDetail').classList.remove('hidden');
+    document.getElementById('taskTitle').innerText = title;
+    document.getElementById('taskAnswer').value = localStorage.getItem(title) || '';
+    document.getElementById('result').innerText = '';
+    
+    startTime = new Date();
+    document.getElementById('timer').innerText = 'Бастаған уақыт: ' + startTime.toLocaleTimeString();
+}
+
+async function checkTask() {
+    if (!startTime) {
+        alert("Алдымен тапсырманы таңдаңыз");
+        return;
+    }
+    
+    let ans = document.getElementById('taskAnswer').value.trim();
+    let endTime = new Date();
+    let diff = Math.floor((endTime - startTime) / 1000);
+    let minutes = Math.floor(diff / 60);
+    let seconds = diff % 60;
+    let timeStr = minutes > 0 ? minutes + ' мин ' + seconds + ' сек' : seconds + ' сек';
+    
+    let correct = false;
+    
+    if (isPython && pyodide && expectedResult !== null) {
+        try {
+            let result = await pyodide.runPythonAsync(ans);
+            if (result === expectedResult) {
+                correct = true;
+            }
+        } catch (e) {
+            // если ошибка, проверить как текст
+            for (let variant of currentAnswer) {
+                if (Array.isArray(variant)) {
+                    correct = variant.every(phrase => ans.includes(phrase.trim()));
+                } else {
+                    correct = variant === ans.trim();
+                }
+                if (correct) break;
+            }
+        }
+    } else {
+        // text check
+        for (let variant of currentAnswer) {
+            if (Array.isArray(variant)) {
+                correct = variant.every(phrase => ans.includes(phrase.trim()));
+            } else {
+                correct = variant === ans.trim();
+            }
+            if (correct) break;
+        }
+    }
+    
+    if (correct) {
+        document.getElementById('result').innerHTML = '<span class="correct"><i class="fas fa-check"></i> Дұрыс!</span> (' + timeStr + ' шешілді)';
+    } else {
+        document.getElementById('result').innerHTML = '<span class="wrong"><i class="fas fa-times"></i> Бұрыс!</span> (' + timeStr + ' шешілді)';
+    }
+    localStorage.setItem(currentTask, ans);
+}
+
+// Notes
+function saveNote() { 
+    let text = document.getElementById('noteText').value; 
+    localStorage.setItem("note", text); 
+    alert('Сақталды'); 
+}
+
+// Загружаем сохраненную заметку при старте
+window.addEventListener('load', function() {
+    let savedNote = localStorage.getItem("note");
+    if (savedNote) {
+        document.getElementById('noteText').value = savedNote;
+    }
+});
+
+// Visits Logging
+let visits = JSON.parse(localStorage.getItem('visits') || '[]');
+let now = new Date();
+let fakeIP = '192.168.' + Math.floor(Math.random() * 255) + '.' + Math.floor(Math.random() * 255);
+visits.push({ 
+    time: now.toLocaleString(), 
+    ip: fakeIP, 
+    user: localStorage.getItem("currentUser") || "Гость",
+    details: 'Посещение страницы' 
+});
+localStorage.setItem('visits', JSON.stringify(visits));
+document.getElementById('visitCount').innerText = visits.length;
+
+// Populate Visits Table
+let tbody = document.getElementById('visitsTableBody');
+visits.forEach(v => {
+    let row = `<tr><td>${v.time}</td><td>${v.ip}</td><td>${v.user || "Гость"}</td><td>${v.details}</td></tr>`;
+    tbody.innerHTML += row;
+});
+
+let currentUser = localStorage.getItem("currentUser");
+if (currentUser) {
+    document.getElementById('currentUserDisplay').innerText = ` | ${currentUser}`;
+}
+let users = JSON.parse(localStorage.getItem("users") || "[]");
+if (users.length === 0) {
+    users.push({ user: "test", pass: "123" });
+    localStorage.setItem("users", JSON.stringify(users));
+}
+
+let pyodide;
+async function initPyodide() {
+    pyodide = await loadPyodide({
+        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/"
+    });
+    await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+a = 2
+b = 3
+N = 10
+x = 4
+`);
+}
+initPyodide();
+</script>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+
+</body>
+</html>
