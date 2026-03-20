@@ -1,5 +1,5 @@
 
-# 🖥️ ArchRPG — Cache Architecture Simulator
+# 🖥️  Student Management System
 
 **Knight of Silicon**
 
